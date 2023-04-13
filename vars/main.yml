@@ -1,0 +1,4 @@
+---
+awx_version: 22.0.0
+control_nodes: 1
+worker_nodes: 2
