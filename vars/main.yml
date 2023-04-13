@@ -2,3 +2,7 @@
 awx_version: 22.0.0
 control_nodes: 1
 worker_nodes: 2
+github_user: user
+github_branch: branch
+github_path: clusters/kind-awx
+github_token: token
