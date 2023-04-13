@@ -1,0 +1,24 @@
+---
+- name: Clone AWX repo
+  hosts: localhost
+  vars_files:
+    - vars/main.yml
+  tasks:
+    - name: Clone AWX repo
+      ansible.builtin.git:
+        repo: https://github.com/ansible/awx.git
+        dest: /tmp/awx
+        version: "{{ awx_version }}"
+        force: true
+
+    - name: Patch AWX Makefile
+      ansible.builtin.lineinfile:
+        path: /tmp/awx/Makefile
+        regexp: "^PYTHON \\?= python3.9"
+        line: "PYTHON ?= python3"
+        backrefs: true
+        state: present
+
+    - name: Finished, change directory to /tmp/awx/tools/ansible/
+      ansible.builtin.debug:
+        msg: "Finished, build the AWX container image: pushd /tmp/awx/tools/ansible/ && ansible-playbook -e 'awx_version={{ awx_version }}' build.yml && popd"
