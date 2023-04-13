@@ -19,6 +19,6 @@
         backrefs: true
         state: present
 
-    - name: Finished, change directory to /tmp/awx/tools/ansible/
+    - name: Finished, build the AWX container image
       ansible.builtin.debug:
         msg: "Finished, build the AWX container image: pushd /tmp/awx/tools/ansible/ && ansible-playbook -e 'awx_version={{ awx_version }}' build.yml && popd"
