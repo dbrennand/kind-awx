@@ -1,0 +1,48 @@
+---
+- name: Deploy kind cluster with AWX
+  hosts: localhost
+  vars_files:
+    - vars/main.yml
+  pre_tasks:
+    - name: Install kind, kubectl and fluxctl
+      community.general.homebrew:
+        name:
+          - kind
+          - kubectl
+          - fluxcd/tap/flux
+        state: present
+  tasks:
+    - name: Render kind cluster config from template
+      ansible.builtin.template:
+        src: kind-cluster.yml.j2
+        dest: kind-cluster.yml
+        mode: "644"
+
+    - name: Deploy kind cluster
+      ansible.builtin.command:
+        cmd: kind create cluster --config kind-cluster.yml
+      register: kind_cluster_deploy
+      changed_when: "'Creating cluster' in kind_cluster_deploy.stderr"
+      failed_when: kind_cluster_deploy.rc != 0 and 'node(s) already exist for a cluster' not in kind_cluster_deploy.stderr
+
+    - name: Set kubectl context
+      ansible.builtin.command:
+        cmd: kubectl cluster-info --context kind-kind
+      changed_when: false
+
+    - name: Load AWX image into kind cluster
+      ansible.builtin.command:
+        cmd: "kind load docker-image ansible/awx:{{ awx_version }}"
+      changed_when: false
+
+    - name: Run Flux prerequisite check
+      ansible.builtin.command:
+        cmd: flux check --pre
+      changed_when: false
+
+    - name: Bootstrap kind cluster with Flux
+      ansible.builtin.command:
+        cmd: "flux bootstrap github --owner={{ github_user }} --repository=kind-awx --branch={{ github_branch }} --path={{ github_path }} --personal"
+      environment:
+        GITHUB_TOKEN: "{{ github_token }}"
+      changed_when: false
